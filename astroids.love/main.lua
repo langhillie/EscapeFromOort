@@ -3,7 +3,6 @@ function debug()
 
 end
 
--- Draws triangular ship
 function drawShip()
 -- pushes matrix transormation
 	love.graphics.push() 
@@ -14,7 +13,7 @@ function drawShip()
 	-- Moves origin back to draw
 	love.graphics.translate(-player.x, -player.y)
 	-- Draws player
-	love.graphics.rectangle("line", player.x - player.width / 2, player.y - player.length / 2, player.width, player.length)
+	love.graphics.line(player.x - 5, player.y + 8, player.x, player.y - 8, player.x + 5, player.y + 8)
 	-- Restores the scenes matrix transformation
 	love.graphics.pop() 
 end
@@ -23,13 +22,14 @@ function drawBullets()
 	for i,v in pairs(player.bullets) do
 		love.graphics.push()
 		love.graphics.translate(v.x, v.y)
-		love.graphics.rotate(v.rot)
+		love.graphics.rotate(v.rot + math.pi / 2)
 		love.graphics.translate(-v.x, -v.y)
 		love.graphics.rectangle("fill", v.x, v.y, 5, 2)
 		love.graphics.pop()
 	end
 end
 
+-- Called on load
 function love.load()
 	-- variables
 	enableDebug = 1
@@ -62,12 +62,13 @@ function love.load()
 		bullet.x = player.x
 		bullet.y = player.y
 		bullet.rot = player.rot
-		bullet.xVelocity = (player.weapon.velocity + player.xVelocity) * math.cos(player.rot)
-		bullet.yVelocity = (player.weapon.velocity + player.yVelocity) * math.sin(player.rot)
+		bullet.xVelocity = (player.weapon.velocity + player.xVelocity) * math.sin(player.rot)
+		bullet.yVelocity = (player.weapon.velocity + player.yVelocity) * -math.cos(player.rot)
 		table.insert(player.bullets, bullet)
 	end
 end
 
+-- Called before draw (once per frame)
 function love.update(dt)
 	if love.keyboard.isDown("o") then
 		enableDebug = 1 - enableDebug
@@ -85,8 +86,8 @@ function love.update(dt)
 	end
 	if love.keyboard.isDown("up") then
 		player.thrustEnabled = 1
-		player.xVelocity = player.xVelocity + 100 * math.cos(player.rot) * player.thrust * dt / player.mass 
-		player.yVelocity = player.yVelocity + 100 * math.sin(player.rot) * player.thrust * dt / player.mass 
+		player.xVelocity = player.xVelocity + 100 * math.sin(player.rot) * player.thrust * dt / player.mass 
+		player.yVelocity = player.yVelocity + 100 * -math.cos(player.rot) * player.thrust * dt / player.mass 
 	else
 		player.thrustEnabled = 0
 	end
@@ -110,6 +111,7 @@ function love.update(dt)
 	end
 end
 
+-- Draws the scene
 function love.draw()
 
 	drawShip()
