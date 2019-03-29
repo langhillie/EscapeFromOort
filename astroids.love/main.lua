@@ -3,7 +3,32 @@ function debug()
 
 end
 
+-- Draws triangular ship
+function drawShip()
+-- pushes matrix transormation
+	love.graphics.push() 
+	-- Moves origin to player for rotation
+	love.graphics.translate(player.x, player.y)
+	-- Rotates player around the origin
+	love.graphics.rotate(player.rot)
+	-- Moves origin back to draw
+	love.graphics.translate(-player.x, -player.y)
+	-- Draws player
+	love.graphics.rectangle("line", player.x - player.width / 2, player.y - player.length / 2, player.width, player.length)
+	-- Restores the scenes matrix transformation
+	love.graphics.pop() 
+end
 
+function drawBullets()
+	for i,v in pairs(player.bullets) do
+		love.graphics.push()
+		love.graphics.translate(v.x, v.y)
+		love.graphics.rotate(v.rot)
+		love.graphics.translate(-v.x, -v.y)
+		love.graphics.rectangle("fill", v.x, v.y, 5, 2)
+		love.graphics.pop()
+	end
+end
 
 function love.load()
 	-- variables
@@ -20,6 +45,7 @@ function love.load()
 	player.xVelocity = 0
 	player.yVelocity = 0
 	player.thrust = 100
+	player.thrustEnabled = 0
 	player.mass = 50
 	
 	player.rot = 0 -- Initial rotation
@@ -58,8 +84,11 @@ function love.update(dt)
 		player.rot = player.rot - 2 * math.pi * dt
 	end
 	if love.keyboard.isDown("up") then
+		player.thrustEnabled = 1
 		player.xVelocity = player.xVelocity + 100 * math.cos(player.rot) * player.thrust * dt / player.mass 
 		player.yVelocity = player.yVelocity + 100 * math.sin(player.rot) * player.thrust * dt / player.mass 
+	else
+		player.thrustEnabled = 0
 	end
 	
 	player.weapon.cooldown = math.max(player.weapon.cooldown - dt, 0)
@@ -82,26 +111,9 @@ function love.update(dt)
 end
 
 function love.draw()
-	-- pushes matrix transormation
-	love.graphics.push() 
-	-- Moves origin to player for rotation
-	love.graphics.translate(player.x, player.y)
-	-- Rotates player around the origin
-	love.graphics.rotate(player.rot)
-	-- Moves origin back to draw
-	love.graphics.translate(-player.x, -player.y)
-	-- Draws player
-	love.graphics.rectangle("line", player.x - player.width / 2, player.y - player.length / 2, player.width, player.length)
-	-- Restores the scenes matrix transformation
-	love.graphics.pop() 
+
+	drawShip()
 	
-	for i,v in pairs(player.bullets) do
-		love.graphics.push()
-		love.graphics.translate(v.x, v.y)
-		love.graphics.rotate(v.rot)
-		love.graphics.translate(-v.x, -v.y)
-		love.graphics.rectangle("fill", v.x, v.y, 5, 2)
-		love.graphics.pop()
-	end
+	drawBullets()
 		
 end
