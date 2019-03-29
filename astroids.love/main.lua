@@ -1,5 +1,5 @@
 function debug()
-
+	love.graphics.print("Weapon Cooldown: " .. player.weapon.cooldown, 5, 5)
 
 end
 
@@ -7,7 +7,7 @@ end
 
 function love.load()
 	-- variables
-	enableDebug = 0
+	enableDebug = 1
 
 
 	-- player setup
@@ -19,14 +19,15 @@ function love.load()
 	
 	player.xVelocity = 0
 	player.yVelocity = 0
-	player.thrust = 10
-	player.mass = 300
+	player.thrust = 100
+	player.mass = 50
 	
 	player.rot = 0 -- Initial rotation
 	
 	player.weapon = {}
-	player.weapon.velocity = 8
-	player.weapon.firerate = 5 -- attacks per second
+	player.weapon.velocity = 500
+	player.weapon.firerate = 8 -- attacks per second
+	player.weapon.cooldown = 0
 	
 	player.bullets = {}
 
@@ -42,36 +43,41 @@ function love.load()
 end
 
 function love.update(dt)
-	
 	if love.keyboard.isDown("o") then
 		enableDebug = 1 - enableDebug
+	end
+	if enableDebug == 1 then
+		debug()
 	end
 
 	-- Player Controls
 	if love.keyboard.isDown("right") then
-		player.rot = player.rot + 0.1
+		player.rot = player.rot + 2 * math.pi * dt
 	end
 	if love.keyboard.isDown("left") then
-		player.rot = player.rot - 0.1
+		player.rot = player.rot - 2 * math.pi * dt
 	end
 	if love.keyboard.isDown("up") then
-		player.xVelocity = player.xVelocity + math.cos(player.rot) * player.thrust / player.mass
-		player.yVelocity = player.yVelocity + math.sin(player.rot) * player.thrust / player.mass
+		player.xVelocity = player.xVelocity + 100 * math.cos(player.rot) * player.thrust * dt / player.mass 
+		player.yVelocity = player.yVelocity + 100 * math.sin(player.rot) * player.thrust * dt / player.mass 
 	end
 	
-	if love.keyboard.isDown("space") then
+	player.weapon.cooldown = math.max(player.weapon.cooldown - dt, 0)
+	
+	if love.keyboard.isDown("space") and player.weapon.cooldown == 0 then
+		player.weapon.cooldown = 1 / player.weapon.firerate
 		player.shoot()
 	end
 
 	-- update player position
-	player.x = player.x + player.xVelocity
-	player.y = player.y + player.yVelocity
+	player.x = player.x + player.xVelocity * dt
+	player.y = player.y + player.yVelocity * dt
 
 
 	-- Update bullet locations
 	for i,v in pairs(player.bullets) do
-		v.x = v.x + v.xVelocity
-		v.y = v.y + v.yVelocity
+		v.x = v.x + v.xVelocity * dt
+		v.y = v.y + v.yVelocity * dt
 	end
 end
 
