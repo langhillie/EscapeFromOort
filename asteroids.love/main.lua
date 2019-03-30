@@ -78,7 +78,7 @@ function drawBullets()
 		love.graphics.translate(v.x, v.y)
 		love.graphics.rotate(v.rot + math.pi / 2)
 		love.graphics.translate(-v.x, -v.y)
-		love.graphics.rectangle("fill", v.x, v.y, 5, 2)
+		love.graphics.rectangle("fill", v.x - v.width / 2, v.y - v.height / 2, v.width, v.height)
 		love.graphics.pop()
 	end
 end
@@ -121,6 +121,9 @@ function love.load()
 		bullet = {}
 		bullet.x = player.x
 		bullet.y = player.y
+		bullet.width = 3
+		bullet.height = 3
+		
 		bullet.rot = player.rot
 		bullet.xVelocity = player.weapon.velocity * math.sin(player.rot) + player.xVelocity
 		bullet.yVelocity = player.weapon.velocity * -math.cos(player.rot) + player.yVelocity
