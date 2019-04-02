@@ -23,12 +23,11 @@ function checkCollision(x1,y1,w1,h1, x2,y2,w2,h2)
 end
 
 
--- TODO
 function generateAsteroid()
 	local scale = math.random() * 50 + 5
 	
-	rand = math.random(3, 12)
-	numVerts = math.ceil(rand) + math.floor(scale / 7)
+	rand = math.random(3, 10)
+	numVerts = math.ceil(rand) + math.floor(scale / 8)
 	angle = (2 * math.pi) / numVerts
 
 	local asteroid = {}
