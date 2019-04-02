@@ -1,5 +1,5 @@
 function debug()
-	love.graphics.print("Weapon Cooldown: " .. player.weapon.cooldown, 5, 5)
+	love.graphics.print("Weapon Cooldown: " .. player.weapon.cooldown, 20, 20)
 
 	-- reset ship
 	if love.keyboard.isDown("r") then
@@ -15,38 +15,71 @@ function debug()
 	--end
 end
 
+function checkCollision(x1,y1,w1,h1, x2,y2,w2,h2)
+  return x1 < x2+w2 and
+         x2 < x1+w1 and
+         y1 < y2+h2 and
+         y2 < y1+h1
+end
+
+
 -- TODO
--- mid point subdivision
-function generateAsteroid(x, y, s)
-
-	love.graphics.line(x, y - 4, x - 4, y, x, y + 4, x + 4, y)
-
---[[
-	roughness = 12
+function generateAsteroid()
+	local scale = math.random() * 50 + 5
 	
-	points = {}
-	rand = math.rand()
-	pointx[0] = s + rand * roughness
-	for i=0, N do
-		for j=0, M do
-			points[2*j] = {}
-			points[2*j].x = 0
-			points[2*j].y = 0
-		end
+	rand = math.random(3, 12)
+	numVerts = math.ceil(rand) + math.floor(scale / 7)
+	angle = (2 * math.pi) / numVerts
+
+	local asteroid = {}
+
+	asteroid.x = math.random() * 500 + 50
+	asteroid.y = math.random() * 500 + 50
+	asteroid.rot = 0
+	asteroid.velocity = 0
 	
+	-- Initializing
+	asteroid.points = {}
+	for i = 1, numVerts do
+		asteroid.points[i] = {}
 	end
 
-	love.graphics.line()
-	]]--
+	local scale = math.random() * 50 + 10
+
+	for i, n in pairs(asteroid.points) do
+		asteroid.points[i].x = math.cos(angle * i) * scale + ((math.random() * scale * 2 ) - scale) / 4
+		asteroid.points[i].y = math.sin(angle * i) * scale + ((math.random() * scale * 2 ) - scale) / 4
+		--print("" .. asteroid.points[i].x .. "," .. asteroid.points[i].y .. "")
+	end
+	table.insert(asteroids, asteroid)
+
 end
 
+function drawAsteroids()
+	-- loops through every asteroid
+	for i, asteroid in ipairs(asteroids) do
+		local startPoint = {}
+		local prevPoint = {}
+	
+		love.graphics.push()
+		love.graphics.translate(asteroid.x, asteroid.y)
+		
+		-- loops through every point that selected asteroid has
+		for j, point in ipairs(asteroid.points) do
+			if j == 1 then
+				startPoint = point
+			else
+				love.graphics.line(prevPoint.x, prevPoint.y, point.x, point.y)
+			end
+			prevPoint = point
+		end
+		love.graphics.line(prevPoint.x, prevPoint.y, startPoint.x, startPoint.y)
+		
+		love.graphics.pop()
+	end
+end
 
 function drawUI()
-
-end
-
--- returns false if co-ordinates are out of bounds (and object should be deleted)
-function checkBounds(x, y)
 
 end
 
@@ -85,16 +118,23 @@ end
 
 -- Called on load
 function love.load()
+	local seed = os.time()
+	math.randomseed(seed)
+	print("Seed: " .. seed)
+
+
 	-- variables
 	settings = {}
 	settings.enableDebug = 1
+	
 	game = {}
 	game.score = 0
+	game.asteroids = {}
 	
 	window = {}
 	window.width = love.graphics.getWidth()
 	window.height = love.graphics.getHeight()
-
+	
 	-- player setup
 	player = {}
 	player.x = love.graphics.getWidth() /2
@@ -129,6 +169,9 @@ function love.load()
 		bullet.yVelocity = player.weapon.velocity * -math.cos(player.rot) + player.yVelocity
 		table.insert(player.bullets, bullet)
 	end
+	
+	asteroids = {}
+	generateAsteroid()
 end
 
 -- Called before draw (once per frame)
@@ -143,6 +186,10 @@ function love.update(dt)
 		player.y = 0
 	elseif player.y < 0 then
 		player.y = window.height
+	end
+	
+	if love.keyboard.isDown("a") then
+		generateAsteroid()
 	end
 	
 	
@@ -188,14 +235,13 @@ function love.update(dt)
 		v.y = v.y + v.yVelocity * dt
 	end
 	
-	
-	generateAsteroid(100, 100, 1)
-	
 end
 
 -- Draws the scene
 function love.draw()
 
+	drawAsteroids()
+	
 	drawShip()
 	
 	drawBullets()
