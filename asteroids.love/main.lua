@@ -28,8 +28,10 @@ function generateAsteroid()
 
 	asteroid.x = math.random() * 500 + 50
 	asteroid.y = math.random() * 500 + 50
-	asteroid.rot = 0
-	asteroid.velocity = 0
+	local maxVelocity = 30
+	asteroid.rot = 2 * math.pi * math.random()
+	asteroid.xVelocity = math.random() * maxVelocity * math.sin(asteroid.rot)
+	asteroid.yVelocity = math.random() * maxVelocity * -math.cos(asteroid.rot)
 	
 	-- Initializing
 	asteroid.points = {}
@@ -230,21 +232,37 @@ function love.update(dt)
 	player.x = player.x + player.xVelocity * dt
 	player.y = player.y + player.yVelocity * dt
 
-	
-	-- Check if player hits an asteroid
-	for i, asteroid in ipairs(asteroids) do
-		if checkCollision(player.x, player.y, player.radius, asteroid.x, asteroid.y, asteroid.scale) then
-			resetShip()
-		end
-	end
-	
 	-- Update bullet locations
-	for i, bullet in pairs(player.bullets) do
+	for i, bullet in ipairs(player.bullets) do
 		-- delete bullet if it is out of bounds
+		if (bullet.x > window.width or bullet.x < 0 or bullet.y > window.height or bullet.y < 0) then
+			table.remove(player.bullets, i)
+		end
 	
 		bullet.x = bullet.x + bullet.xVelocity * dt
 		bullet.y = bullet.y + bullet.yVelocity * dt
 	end
+	
+	
+	for i, asteroid in ipairs(asteroids) do
+		--move asteroids
+		asteroid.x = asteroid.x + asteroid.xVelocity * dt
+		asteroid.y = asteroid.y + asteroid.yVelocity * dt
+	
+	
+		-- Check if player hits an asteroid
+		if checkCollision(player.x, player.y, player.radius, asteroid.x, asteroid.y, asteroid.scale) then
+			resetShip()
+		end
+		for j, bullet in ipairs(player.bullets) do
+			if checkCollision(asteroid.x, asteroid.y, asteroid.scale, bullet.x, bullet.y, 1) then
+				table.remove(asteroids, i)
+				table.remove(player.bullets, j)
+			end
+		end
+	end
+	
+
 	
 end
 
