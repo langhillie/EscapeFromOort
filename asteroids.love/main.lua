@@ -3,11 +3,7 @@ function debug()
 
 	-- reset ship
 	if love.keyboard.isDown("r") then
-		player.x = window.width / 2
-		player.y = window.height / 2
-		player.xVelocity = 0
-		player.yVelocity = 0
-		player.rot = 0
+		resetShip()
 	end
 	
 	--for i,v in pairs(player.bullets) do
@@ -22,13 +18,13 @@ end
 
 
 function generateAsteroid()
-	local scale = math.random() * 50 + 5
+	local asteroid = {}
+	
+	asteroid.scale = math.random() * 50 + 5
 	
 	rand = math.random(3, 10)
-	numVerts = math.ceil(rand) + math.floor(scale / 8)
+	numVerts = math.ceil(rand) + math.floor(asteroid.scale / 8)
 	angle = (2 * math.pi) / numVerts
-
-	local asteroid = {}
 
 	asteroid.x = math.random() * 500 + 50
 	asteroid.y = math.random() * 500 + 50
@@ -44,8 +40,8 @@ function generateAsteroid()
 	local scale = math.random() * 50 + 10
 
 	for i, n in pairs(asteroid.points) do
-		asteroid.points[i].x = math.cos(angle * i) * scale + ((math.random() * scale * 2 ) - scale) / 4
-		asteroid.points[i].y = math.sin(angle * i) * scale + ((math.random() * scale * 2 ) - scale) / 4
+		asteroid.points[i].x = math.cos(angle * i) * asteroid.scale + ((math.random() * asteroid.scale * 2 ) - asteroid.scale) / 4
+		asteroid.points[i].y = math.sin(angle * i) * asteroid.scale + ((math.random() * asteroid.scale * 2 ) - asteroid.scale) / 4
 		--print("" .. asteroid.points[i].x .. "," .. asteroid.points[i].y .. "")
 	end
 	table.insert(asteroids, asteroid)
@@ -74,6 +70,14 @@ function drawAsteroids()
 		
 		love.graphics.pop()
 	end
+end
+
+function resetShip()
+		player.x = window.width / 2
+		player.y = window.height / 2
+		player.xVelocity = 0
+		player.yVelocity = 0
+		player.rot = 0
 end
 
 function drawUI()
@@ -144,6 +148,9 @@ function love.load()
 	player.thrust = 100
 	player.thrustEnabled = 0
 	player.mass = 50
+	
+	-- for the purposes of collision detection
+	player.radius = 2
 	
 	player.rot = 0 -- Initial rotation
 	
@@ -223,13 +230,20 @@ function love.update(dt)
 	player.x = player.x + player.xVelocity * dt
 	player.y = player.y + player.yVelocity * dt
 
-
+	
+	-- Check if player hits an asteroid
+	for i, asteroid in ipairs(asteroids) do
+		if checkCollision(player.x, player.y, player.radius, asteroid.x, asteroid.y, asteroid.scale) then
+			resetShip()
+		end
+	end
+	
 	-- Update bullet locations
-	for i,v in pairs(player.bullets) do
+	for i, bullet in pairs(player.bullets) do
 		-- delete bullet if it is out of bounds
 	
-		v.x = v.x + v.xVelocity * dt
-		v.y = v.y + v.yVelocity * dt
+		bullet.x = bullet.x + bullet.xVelocity * dt
+		bullet.y = bullet.y + bullet.yVelocity * dt
 	end
 	
 end
