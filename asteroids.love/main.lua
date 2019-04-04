@@ -11,6 +11,7 @@ function debug()
 	--end
 end
 
+-- returns true if there's a collision
 function checkCollision(x1,y1,s1, x2,y2,s2)
   local distance = math.sqrt((x1 - x2)^2 + (y1 - y2)^2)
   return distance <= s1 + s2 + 2
@@ -26,9 +27,14 @@ function generateAsteroid()
 	numVerts = math.ceil(rand) + math.floor(asteroid.scale / 8)
 	angle = (2 * math.pi) / numVerts
 
+	-- TODO
+	-- spawn on a circle surrounding the area
 	asteroid.x = math.random() * 500 + 50
 	asteroid.y = math.random() * 500 + 50
 	local maxVelocity = 30
+	
+	-- TODO
+	-- point roughly towards the center
 	asteroid.rot = 2 * math.pi * math.random()
 	asteroid.xVelocity = math.random() * maxVelocity * math.sin(asteroid.rot)
 	asteroid.yVelocity = math.random() * maxVelocity * -math.cos(asteroid.rot)
@@ -39,7 +45,7 @@ function generateAsteroid()
 		asteroid.points[i] = {}
 	end
 
-	local scale = math.random() * 50 + 10
+	local scale = math.random() * 40 + 20
 
 	for i, n in pairs(asteroid.points) do
 		asteroid.points[i].x = math.cos(angle * i) * asteroid.scale + ((math.random() * asteroid.scale * 2 ) - asteroid.scale) / 4
@@ -178,6 +184,7 @@ function love.load()
 	
 	asteroids = {}
 	generateAsteroid()
+	genAsteroidTimer = 0
 end
 
 -- Called before draw (once per frame)
@@ -242,6 +249,15 @@ function love.update(dt)
 		bullet.x = bullet.x + bullet.xVelocity * dt
 		bullet.y = bullet.y + bullet.yVelocity * dt
 	end
+	
+	-- generate asteroids
+	genAsteroidTimer = genAsteroidTimer + dt
+	
+	if genAsteroidTimer > 1 then
+		generateAsteroid()
+		genAsteroidTimer = 0
+	end
+	
 	
 	
 	for i, asteroid in ipairs(asteroids) do
