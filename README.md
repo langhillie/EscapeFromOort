@@ -1,5 +1,5 @@
 # luaAsteroids
-Asteroids inspired game created in Lua using the LÖVE engine
+Asteroids inspired game created in Lua using the LÖVE engine (version 11.2)
 
 Still a prototype/Heavy WIP
 
