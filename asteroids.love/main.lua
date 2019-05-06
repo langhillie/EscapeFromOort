@@ -21,23 +21,30 @@ end
 function generateAsteroid()
 	local asteroid = {}
 	
-	asteroid.scale = math.random() * 50 + 5
+	asteroid.scale = math.random() * 45 + 11
 	
 	rand = math.random(3, 10)
 	numVerts = math.ceil(rand) + math.floor(asteroid.scale / 8)
 	angle = (2 * math.pi) / numVerts
 
 	-- TODO
-	-- spawn on a circle surrounding the area
-	asteroid.x = math.random() * 500 + 50
-	asteroid.y = math.random() * 500 + 50
-	local maxVelocity = 30
+	-- despawn asteroids
+	
+	-- randomize starting position of the asteroid
+	local startingAngle = 2 * math.pi * math.random()
+	asteroid.x = math.cos(startingAngle) * (500) + window.width / 2
+	asteroid.y = math.sin(startingAngle) * (500) + window.height / 2
+	local maxVelocity = 50
+	local minVelocity = 10
+	local velocity = minVelocity + math.random() * (maxVelocity - minVelocity)
 	
 	-- TODO
 	-- point roughly towards the center
-	asteroid.rot = 2 * math.pi * math.random()
-	asteroid.xVelocity = math.random() * maxVelocity * math.sin(asteroid.rot)
-	asteroid.yVelocity = math.random() * maxVelocity * -math.cos(asteroid.rot)
+	asteroid.rot = math.atan2(asteroid.y - window.height / 2, asteroid.x - window.width / 2)
+	print(asteroid.rot)
+	--asteroid.rot = 0
+	asteroid.xVelocity = velocity * -math.cos(asteroid.rot)
+	asteroid.yVelocity = velocity * -math.sin(asteroid.rot)
 	
 	-- Initializing
 	asteroid.points = {}
