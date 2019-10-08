@@ -3,7 +3,7 @@ Asteroids inspired game created in Lua using the LÖVE engine (version 11.2)
 
 Still a prototype/Heavy WIP
 
-[Example gameplay](/asteroids.gif)
+![Example gameplay](/asteroids.gif)
 
 You can get LÖVE here:
 https://love2d.org/
