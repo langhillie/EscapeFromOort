@@ -132,6 +132,111 @@ function drawBullets()
 	end
 end
 
+-- Applies physics to ship, bullets, and asteroids
+function applyPhysics(dt)
+	-- looping ship at edges
+	if player.x > window.width then
+		player.x = 0
+	elseif player.x < 0 then
+		player.x = window.width
+	end
+	if player.y > window.height then
+		player.y = 0
+	elseif player.y < 0 then
+		player.y = window.height
+	end
+	
+	-- update player position
+	player.x = player.x + player.xVelocity * dt
+	player.y = player.y + player.yVelocity * dt
+
+	-- Update bullet locations
+	for i, bullet in ipairs(player.bullets) do
+		-- delete bullet if it is out of bounds
+		if (bullet.x > window.width or bullet.x < 0 or bullet.y > window.height or bullet.y < 0) then
+			table.remove(player.bullets, i)
+		end
+	
+		bullet.x = bullet.x + bullet.xVelocity * dt
+		bullet.y = bullet.y + bullet.yVelocity * dt
+	end
+
+	for i, asteroid in ipairs(asteroids) do
+		--move asteroids
+		asteroid.x = asteroid.x + asteroid.xVelocity * dt
+		asteroid.y = asteroid.y + asteroid.yVelocity * dt
+	
+	
+		-- Check if player hits an asteroid
+		if checkCollision(player.x, player.y, player.radius, asteroid.x, asteroid.y, asteroid.scale) then
+			resetShip()
+		end
+		for j, bullet in ipairs(player.bullets) do
+			if checkCollision(asteroid.x, asteroid.y, asteroid.scale, bullet.x, bullet.y, 1) then
+				table.remove(asteroids, i)
+				table.remove(player.bullets, j)
+			end
+		end
+	end
+end
+
+function userInputHandler(dt)
+	if love.keyboard.isDown("a") then
+		generateAsteroid()
+	end
+	
+	
+	if love.keyboard.isDown("o") then
+		settings.enableDebug = 1 - settings.enableDebug
+	end
+	
+	-- Player Controls
+	if love.keyboard.isDown("right") then
+		player.rot = player.rot + 2 * math.pi * dt
+	end
+	if love.keyboard.isDown("left") then
+		player.rot = player.rot - 2 * math.pi * dt
+	end
+	if love.keyboard.isDown("up") then
+		player.thrustEnabled = 1
+		player.xVelocity = player.xVelocity + 100 * math.sin(player.rot) * player.thrust * dt / player.mass 
+		player.yVelocity = player.yVelocity + 100 * -math.cos(player.rot) * player.thrust * dt / player.mass 
+	else
+		player.thrustEnabled = 0
+	end
+	
+	player.weapon.cooldown = math.max(player.weapon.cooldown - dt, 0)
+	
+	if love.keyboard.isDown("space") and player.weapon.cooldown == 0 then
+		player.weapon.cooldown = 1 / player.weapon.firerate
+		player.shoot()
+	end
+
+end
+
+function asteroidGenerationManager(dt)
+	-- generate asteroids
+	genAsteroidTimer = genAsteroidTimer + dt
+	
+	if genAsteroidTimer > 1 then
+		generateAsteroid()
+		genAsteroidTimer = 0
+	end
+
+end
+
+-- Called before draw (once per frame)
+function love.update(dt)
+	userInputHandler(dt)
+	applyPhysics(dt)
+	asteroidGenerationManager(dt)
+	
+	if settings.enableDebug == 1 then
+		debug()	
+	end
+
+end
+
 -- Called on load
 function love.load()
 	local seed = os.time()
@@ -192,101 +297,6 @@ function love.load()
 	asteroids = {}
 	generateAsteroid()
 	genAsteroidTimer = 0
-end
-
--- Called before draw (once per frame)
-function love.update(dt)
-	-- looping ship at edges
-	if player.x > window.width then
-		player.x = 0
-	elseif player.x < 0 then
-		player.x = window.width
-	end
-	if player.y > window.height then
-		player.y = 0
-	elseif player.y < 0 then
-		player.y = window.height
-	end
-	
-	if love.keyboard.isDown("a") then
-		generateAsteroid()
-	end
-	
-	
-	if love.keyboard.isDown("o") then
-		settings.enableDebug = 1 - settings.enableDebug
-	end
-	if settings.enableDebug == 1 then
-		debug()	
-	end
-
-	-- Player Controls
-	if love.keyboard.isDown("right") then
-		player.rot = player.rot + 2 * math.pi * dt
-	end
-	if love.keyboard.isDown("left") then
-		player.rot = player.rot - 2 * math.pi * dt
-	end
-	if love.keyboard.isDown("up") then
-		player.thrustEnabled = 1
-		player.xVelocity = player.xVelocity + 100 * math.sin(player.rot) * player.thrust * dt / player.mass 
-		player.yVelocity = player.yVelocity + 100 * -math.cos(player.rot) * player.thrust * dt / player.mass 
-	else
-		player.thrustEnabled = 0
-	end
-	
-	player.weapon.cooldown = math.max(player.weapon.cooldown - dt, 0)
-	
-	if love.keyboard.isDown("space") and player.weapon.cooldown == 0 then
-		player.weapon.cooldown = 1 / player.weapon.firerate
-		player.shoot()
-	end
-
-	-- update player position
-	player.x = player.x + player.xVelocity * dt
-	player.y = player.y + player.yVelocity * dt
-
-	-- Update bullet locations
-	for i, bullet in ipairs(player.bullets) do
-		-- delete bullet if it is out of bounds
-		if (bullet.x > window.width or bullet.x < 0 or bullet.y > window.height or bullet.y < 0) then
-			table.remove(player.bullets, i)
-		end
-	
-		bullet.x = bullet.x + bullet.xVelocity * dt
-		bullet.y = bullet.y + bullet.yVelocity * dt
-	end
-	
-	-- generate asteroids
-	genAsteroidTimer = genAsteroidTimer + dt
-	
-	if genAsteroidTimer > 1 then
-		generateAsteroid()
-		genAsteroidTimer = 0
-	end
-	
-	
-	
-	for i, asteroid in ipairs(asteroids) do
-		--move asteroids
-		asteroid.x = asteroid.x + asteroid.xVelocity * dt
-		asteroid.y = asteroid.y + asteroid.yVelocity * dt
-	
-	
-		-- Check if player hits an asteroid
-		if checkCollision(player.x, player.y, player.radius, asteroid.x, asteroid.y, asteroid.scale) then
-			resetShip()
-		end
-		for j, bullet in ipairs(player.bullets) do
-			if checkCollision(asteroid.x, asteroid.y, asteroid.scale, bullet.x, bullet.y, 1) then
-				table.remove(asteroids, i)
-				table.remove(player.bullets, j)
-			end
-		end
-	end
-	
-
-	
 end
 
 -- Draws the scene
