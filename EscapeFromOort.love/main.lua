@@ -1,4 +1,6 @@
-function debug()
+require "menu"
+
+function debugUpdate()
 	love.graphics.print("Weapon Cooldown: " .. player.weapon.cooldown, 20, 20)
 
 	-- reset ship
@@ -16,7 +18,6 @@ function checkCollision(x1,y1,s1, x2,y2,s2)
   local distance = math.sqrt((x1 - x2)^2 + (y1 - y2)^2)
   return distance <= s1 + s2 + 2
 end
-
 
 function generateAsteroid()
 	local asteroid = {}
@@ -60,7 +61,6 @@ function generateAsteroid()
 		--print("" .. asteroid.points[i].x .. "," .. asteroid.points[i].y .. "")
 	end
 	table.insert(asteroids, asteroid)
-
 end
 
 function drawAsteroids()
@@ -96,7 +96,7 @@ function resetShip()
 end
 
 function drawUI()
-
+	-- TODO: Add in game UI (Time, score, etc)
 end
 
 function drawShip()
@@ -180,7 +180,7 @@ function applyPhysics(dt)
 	end
 end
 
-function userInputHandler(dt)
+function userGameInputHandler(dt)
 	if love.keyboard.isDown("a") then
 		generateAsteroid()
 	end
@@ -225,41 +225,15 @@ function asteroidGenerationManager(dt)
 
 end
 
--- Called before draw (once per frame)
-function love.update(dt)
-	userInputHandler(dt)
-	applyPhysics(dt)
-	asteroidGenerationManager(dt)
-	
-	if settings.enableDebug == 1 then
-		debug()	
-	end
-
-end
-
--- Called on load
-function love.load()
+function initializeGame()
 	local seed = os.time()
 	math.randomseed(seed)
 	print("Seed: " .. seed)
 
-
-	-- variables
-	settings = {}
-	settings.enableDebug = 1
-	
-	game = {}
-	game.score = 0
-	game.asteroids = {}
-	
-	window = {}
-	window.width = love.graphics.getWidth()
-	window.height = love.graphics.getHeight()
-	
 	-- player setup
 	player = {}
-	player.x = love.graphics.getWidth() /2
-	player.y = love.graphics.getHeight() /2
+	player.x = window.width /2
+	player.y = window.height /2
 	player.width = 10
 	player.length = 15
 	
@@ -297,15 +271,69 @@ function love.load()
 	asteroids = {}
 	generateAsteroid()
 	genAsteroidTimer = 0
+
+	game.state = "game"
+	game.paused = false
+	
+end
+
+function love.keypressed( key, scancode, isrepeat )
+	if game.state == "menu" then
+		userMenuInputHandler(scancode)
+	end
+end
+
+-- Called before draw (once per frame)
+function love.update(dt)
+	if game.paused == false and game.state == "game" then
+		userGameInputHandler(dt)
+		applyPhysics(dt)
+		asteroidGenerationManager(dt)
+		
+		if settings.enableDebug == 1 then
+			debugUpdate()	
+		end
+	end
+
+end
+
+-- Called on load
+function love.load()
+
+	-- variables
+	settings = {}
+	settings.enableDebug = 1
+	
+	game = {}
+	game.score = 0
+	game.asteroids = {}
+	
+	game.state = "menu"
+	game.paused = true
+	
+	window = {}
+	window.width = love.graphics.getWidth()
+	window.height = love.graphics.getHeight()
+	
+	initializeMenu()
 end
 
 -- Draws the scene
 function love.draw()
-
-	drawAsteroids()
+	if game.state == "menu" then
+		drawMenu()
 	
-	drawShip()
+	elseif game.state == "game" then
+		drawAsteroids()
+		drawShip()
+		drawBullets()
+		drawUI()
+	end
+	if game.paused == true and game.state == "menu" then
+		if settings.enableDebug == 1 then
+			love.graphics.line(window.width/2, 0, window.width/2, window.height)
+			love.graphics.line(0, window.height/2, window.width, window.height/2)
+		end
+	end
 	
-	drawBullets()
-		
 end
