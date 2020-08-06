@@ -1,4 +1,5 @@
 require "menu"
+require "hiscores"
 
 function debugUpdate()
 	love.graphics.print("Weapon Cooldown: " .. player.weapon.cooldown, 20, 20)
@@ -17,6 +18,11 @@ end
 function checkCollision(x1,y1,s1, x2,y2,s2)
   local distance = math.sqrt((x1 - x2)^2 + (y1 - y2)^2)
   return distance <= s1 + s2 + 2
+end
+
+function round(number, decimals)
+    local p = 10^decimals
+    return math.floor(number * p) / p
 end
 
 function generateAsteroid()
@@ -95,8 +101,34 @@ function resetShip()
 		player.rot = 0
 end
 
+function shipDestroyed()
+	game.state = "menu"
+	game.paused = true
+	-- Handle high scores, etc
+	
+	--local highScoresFile = io.open("hiscores.txt", "a")
+	--highScoresFile.write(game.time)
+	love.filesystem.append("hiscores.txt", game.time)
+end
+
 function drawUI()
 	-- TODO: Add in game UI (Time, score, etc)
+	if game.paused == true then
+		local pauseText = "PAUSED"
+		local textWidth = game.font:getWidth(pauseText)
+		local textHeight = game.font:getHeight()
+		local pauseTextTransform = love.math.newTransform(window.width / 2 - textWidth / 2, window.height / 2 - textHeight / 2)
+		
+		love.graphics.printf(pauseText, game.font, pauseTextTransform, game.font:getWidth(pauseText), "left")
+	end
+	local transform2 = love.math.newTransform(window.width / 2, window.height / 2 + 50)
+
+	love.graphics.printf(round(game.time, 3), game.font, transform2, 200, "left")
+	
+end
+
+function updateUI(dt)
+	game.time = game.time + dt
 end
 
 function drawShip()
@@ -169,7 +201,7 @@ function applyPhysics(dt)
 	
 		-- Check if player hits an asteroid
 		if checkCollision(player.x, player.y, player.radius, asteroid.x, asteroid.y, asteroid.scale) then
-			resetShip()
+			shipDestroyed()
 		end
 		for j, bullet in ipairs(player.bullets) do
 			if checkCollision(asteroid.x, asteroid.y, asteroid.scale, bullet.x, bullet.y, 1) then
@@ -280,6 +312,10 @@ end
 function love.keypressed( key, scancode, isrepeat )
 	if game.state == "menu" then
 		userMenuInputHandler(scancode)
+	elseif game.state == "game" then
+		if love.keyboard.isDown("escape") then
+			game.paused = not game.paused
+		end
 	end
 end
 
@@ -289,6 +325,7 @@ function love.update(dt)
 		userGameInputHandler(dt)
 		applyPhysics(dt)
 		asteroidGenerationManager(dt)
+		updateUI(dt)
 		
 		if settings.enableDebug == 1 then
 			debugUpdate()	
@@ -307,6 +344,10 @@ function love.load()
 	game = {}
 	game.score = 0
 	game.asteroids = {}
+	
+	game.font = love.graphics.newFont(18)
+	game.textHeight = game.font:getHeight()
+	game.time = 0
 	
 	game.state = "menu"
 	game.paused = true
@@ -328,8 +369,14 @@ function love.draw()
 		drawShip()
 		drawBullets()
 		drawUI()
+	elseif game.state == "hiscores" then
+	
+	
+	
 	end
-	if game.paused == true and game.state == "menu" then
+	
+	-- debug
+	if not window.width == nil then
 		if settings.enableDebug == 1 then
 			love.graphics.line(window.width/2, 0, window.width/2, window.height)
 			love.graphics.line(0, window.height/2, window.width, window.height/2)

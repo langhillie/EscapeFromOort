@@ -1,3 +1,5 @@
+require "hiscores"
+
 function createButton(t)
 	local this = {
 		text = t,
@@ -27,7 +29,8 @@ function userMenuInputHandler(key)
 			game.state = "game"
 			game.paused = false
 		elseif (menu.selected == 2) then
-			-- TODO: High scores
+			loadHiscores()
+			game.state = "hiscores"
 		elseif (menu.selected == 3) then
 			love.event.quit()
 		end
