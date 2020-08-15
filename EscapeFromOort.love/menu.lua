@@ -6,6 +6,13 @@ function createButton(t)
 	return this
 end
 
+function updateHiscore()
+    for line in love.filesystem.lines("hiscores.txt") do
+        if tonumber(line) > tonumber(game.hiscore) then
+            game.hiscore = line
+        end
+    end
+end
 
 function userMenuInputHandler(key)
 	if key == "up" then
@@ -27,8 +34,6 @@ function userMenuInputHandler(key)
 			game.state = "game"
 			game.paused = false
 		elseif (menu.selected == 2) then
-			-- TODO: High scores
-		elseif (menu.selected == 3) then
 			love.event.quit()
 		end
 	end
@@ -36,27 +41,29 @@ end
 
 function initializeMenu()
 	menu = {}
-	
 	menu.font = love.graphics.newFont(18)
-	
 	menu.buttonWidth = 100
 	menu.buttonHeight = 40
 
 	menu.buttons = {}
-	
 	local playMenuButton = createButton("Play")
-	local scoresMenuButton = createButton("Scores")
 	local quitMenuButton = createButton("Quit")
 	
 	menu.selected = 1
 	playMenuButton.selected = true
 	table.insert(menu.buttons, playMenuButton)
-	table.insert(menu.buttons, scoresMenuButton)
 	table.insert(menu.buttons, quitMenuButton)
+    
+    updateHiscore()
 end
 
 function drawMenu()
+    local hiscoretext = "Hiscore: " .. round(game.hiscore, 3)
+    
+    love.graphics.printf(hiscoretext, menu.font, 0, 30, window.width, "center")
 
+    
+    
 	for i, button in ipairs(menu.buttons) do
 		local x = window.width / 2 - menu.buttonWidth / 2
 		local y = window.height / 2 - menu.buttonHeight / 2 + (menu.buttonHeight + 20) * ( (i-0.5) - table.getn(menu.buttons) / 2)
@@ -71,6 +78,5 @@ function drawMenu()
 		
 		local textHeight = menu.font:getHeight()
 		love.graphics.printf(button.text, menu.font, x, y + menu.buttonHeight / 2 - textHeight / 2, menu.buttonWidth, "center")
-
 	end
 end

@@ -4,9 +4,9 @@ function debugUpdate()
 	love.graphics.print("Weapon Cooldown: " .. player.weapon.cooldown, 20, 20)
 
 	-- reset ship
-	if love.keyboard.isDown("r") then
-		resetShip()
-	end
+	--if love.keyboard.isDown("r") then
+	--	resetShip()
+	--end
 	
 	--for i,v in pairs(player.bullets) do
 		-- print debug information
@@ -17,6 +17,11 @@ end
 function checkCollision(x1,y1,s1, x2,y2,s2)
   local distance = math.sqrt((x1 - x2)^2 + (y1 - y2)^2)
   return distance <= s1 + s2 + 2
+end
+
+function round(number, decimals)
+    local p = 10^decimals
+    return math.floor(number * p) / p
 end
 
 function generateAsteroid()
@@ -95,12 +100,39 @@ function resetShip()
 		player.rot = 0
 end
 
+function shipDestroyed()
+	game.state = "menu"
+	game.paused = true
+	-- Handle high scores, etc
+
+	love.filesystem.append("hiscores.txt", game.time .. "\n")
+    
+    updateHiscore()
+    
+    game.time = 0
+end
+
 function drawUI()
 	-- TODO: Add in game UI (Time, score, etc)
+	if game.paused == true then
+		local pauseText = "PAUSED"
+		local textWidth = game.font:getWidth(pauseText)
+		local textHeight = game.font:getHeight()
+		local pauseTextTransform = love.math.newTransform(window.width / 2 - textWidth / 2, window.height / 2 - textHeight / 2)
+		love.graphics.printf(pauseText, game.font, pauseTextTransform, game.font:getWidth(pauseText), "left")
+	end
+    
+    local scoreText = round(game.time, 3)
+	local transform2 = love.math.newTransform(window.width / 2 - game.font:getWidth(scoreText) / 2, 30)
+	love.graphics.printf(scoreText, game.font, transform2, 200, "left")
+end
+
+function updateUI(dt)
+	game.time = game.time + dt
 end
 
 function drawShip()
--- pushes matrix transormation
+    -- pushes matrix transormation
 	love.graphics.push() 
 	-- Moves origin to player for rotation
 	love.graphics.translate(player.x, player.y)
@@ -169,7 +201,7 @@ function applyPhysics(dt)
 	
 		-- Check if player hits an asteroid
 		if checkCollision(player.x, player.y, player.radius, asteroid.x, asteroid.y, asteroid.scale) then
-			resetShip()
+			shipDestroyed()
 		end
 		for j, bullet in ipairs(player.bullets) do
 			if checkCollision(asteroid.x, asteroid.y, asteroid.scale, bullet.x, bullet.y, 1) then
@@ -280,6 +312,10 @@ end
 function love.keypressed( key, scancode, isrepeat )
 	if game.state == "menu" then
 		userMenuInputHandler(scancode)
+	elseif game.state == "game" then
+		if love.keyboard.isDown("escape") then
+			game.paused = not game.paused
+		end
 	end
 end
 
@@ -289,6 +325,7 @@ function love.update(dt)
 		userGameInputHandler(dt)
 		applyPhysics(dt)
 		asteroidGenerationManager(dt)
+		updateUI(dt)
 		
 		if settings.enableDebug == 1 then
 			debugUpdate()	
@@ -308,9 +345,15 @@ function love.load()
 	game.score = 0
 	game.asteroids = {}
 	
+	game.font = love.graphics.newFont(18)
+	game.textHeight = game.font:getHeight()
+	game.time = 0
+	
 	game.state = "menu"
 	game.paused = true
 	
+    game.hiscore = 0.000
+    
 	window = {}
 	window.width = love.graphics.getWidth()
 	window.height = love.graphics.getHeight()
@@ -328,12 +371,13 @@ function love.draw()
 		drawShip()
 		drawBullets()
 		drawUI()
-	end
-	if game.paused == true and game.state == "menu" then
+    end
+	
+	-- debug
+	if not window.width == nil then
 		if settings.enableDebug == 1 then
 			love.graphics.line(window.width/2, 0, window.width/2, window.height)
 			love.graphics.line(0, window.height/2, window.width, window.height/2)
 		end
 	end
-	
 end
