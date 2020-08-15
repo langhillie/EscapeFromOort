@@ -1,13 +1,12 @@
 require "menu"
-require "hiscores"
 
 function debugUpdate()
 	love.graphics.print("Weapon Cooldown: " .. player.weapon.cooldown, 20, 20)
 
 	-- reset ship
-	if love.keyboard.isDown("r") then
-		resetShip()
-	end
+	--if love.keyboard.isDown("r") then
+	--	resetShip()
+	--end
 	
 	--for i,v in pairs(player.bullets) do
 		-- print debug information
@@ -105,10 +104,12 @@ function shipDestroyed()
 	game.state = "menu"
 	game.paused = true
 	-- Handle high scores, etc
-	
-	--local highScoresFile = io.open("hiscores.txt", "a")
-	--highScoresFile.write(game.time)
-	love.filesystem.append("hiscores.txt", game.time)
+
+	love.filesystem.append("hiscores.txt", game.time .. "\n")
+    
+    updateHiscore()
+    
+    game.time = 0
 end
 
 function drawUI()
@@ -118,13 +119,12 @@ function drawUI()
 		local textWidth = game.font:getWidth(pauseText)
 		local textHeight = game.font:getHeight()
 		local pauseTextTransform = love.math.newTransform(window.width / 2 - textWidth / 2, window.height / 2 - textHeight / 2)
-		
 		love.graphics.printf(pauseText, game.font, pauseTextTransform, game.font:getWidth(pauseText), "left")
 	end
-	local transform2 = love.math.newTransform(window.width / 2, window.height / 2 + 50)
-
-	love.graphics.printf(round(game.time, 3), game.font, transform2, 200, "left")
-	
+    
+    local scoreText = round(game.time, 3)
+	local transform2 = love.math.newTransform(window.width / 2 - game.font:getWidth(scoreText) / 2, 30)
+	love.graphics.printf(scoreText, game.font, transform2, 200, "left")
 end
 
 function updateUI(dt)
@@ -132,7 +132,7 @@ function updateUI(dt)
 end
 
 function drawShip()
--- pushes matrix transormation
+    -- pushes matrix transormation
 	love.graphics.push() 
 	-- Moves origin to player for rotation
 	love.graphics.translate(player.x, player.y)
@@ -352,6 +352,8 @@ function love.load()
 	game.state = "menu"
 	game.paused = true
 	
+    game.hiscore = 0.000
+    
 	window = {}
 	window.width = love.graphics.getWidth()
 	window.height = love.graphics.getHeight()
@@ -369,11 +371,7 @@ function love.draw()
 		drawShip()
 		drawBullets()
 		drawUI()
-	elseif game.state == "hiscores" then
-	
-	
-	
-	end
+    end
 	
 	-- debug
 	if not window.width == nil then
@@ -382,5 +380,4 @@ function love.draw()
 			love.graphics.line(0, window.height/2, window.width, window.height/2)
 		end
 	end
-	
 end
